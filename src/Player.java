@@ -20,16 +20,14 @@ public class Player {
         return this.connectionStatus;
     }
 
-    public void setConnectionStatus(boolean change) {
-        this.connectionStatus = change;
-    }
+    public void setConnectionStatus() {this.connectionStatus = !this.connectionStatus;}
 
     public boolean getPermission() {
         return this.permission;
     }
 
-    public void setPermission(boolean change) {
-        this.permission = change;
+    public void setPermission() {
+        this.permission = !this.permission;
     }
 
 
