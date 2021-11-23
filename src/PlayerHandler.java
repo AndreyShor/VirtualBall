@@ -23,7 +23,8 @@ public class PlayerHandler implements Runnable {
         this.playerNotificationName = playerNotificationName;
     }
 
-    public void connect() {
+    public void connect(int id) {
+        this.userID = id;
         synchronized (lock) {
             playerList.add(new Player(userID));
         }
@@ -36,12 +37,34 @@ public class PlayerHandler implements Runnable {
         }
     }
 
-    public void choiceBall(int to) {
+    public void kickBall(int to) {
         synchronized (lock) {
-            playerList.get(this.userID).setPermission(); // it will swap ball permission value
-            playerList.get(to).setPermission();
+            for (var e : playerList) {
+                if (e.getID() == this.userID) {
+                    e.setPermission(false);
+                }
+
+                if (e.getID() == to) {
+                    e.setPermission(true);
+                }
+            }
         }
     }
+
+    public boolean checkPlayerExist(int id ) {
+        boolean exist = false;
+        synchronized (lock) {
+            if (playerList.size() != 0 ) {
+                for (var player : playerList){
+                    if (player.getID() == id ) {
+                        exist = true;
+                    }
+                }
+            }
+        }
+        return exist;
+    }
+
 
 
 
@@ -52,17 +75,32 @@ public class PlayerHandler implements Runnable {
             PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
 
             try {
-                this.userID = Integer.parseInt(scanner.nextLine());
-                connect();
-                writer.println("SUCCESS");
 
+                // Check if user id is unique
+                while (true) {
+                    if (this.userID != null){
+                        break;
+                    } else {
+                        int check  = Integer.parseInt(scanner.nextLine());
+                        if (!checkPlayerExist(check)) {
+                            connect(check);
+                            writer.println(0);
+                        } else {
+                            writer.println(-1);
+                        }
+                    }
+
+                }
+
+                // Commands for user
                 while (true) {
                     String line = scanner.nextLine();
                     String[] substrings = line.split(" ");
                     switch (substrings[0].toLowerCase()) {
                         case "kick":
-
-
+                            int to = Integer.parseInt(substrings[1]);
+                            kickBall(to);
+                            writer.println(true);
                             break;
 
                         case "refresh":
@@ -79,6 +117,8 @@ public class PlayerHandler implements Runnable {
 
                         case "exit":
                             disConnect();
+                            writer.println(true);
+                            socket.close();
                             break;
                         default:
                             throw new Exception("Unknown command: " + substrings[0]);

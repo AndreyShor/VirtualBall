@@ -18,27 +18,59 @@ public class Client implements AutoCloseable {
         // Automatically flushes the stream with every command
         writer = new PrintWriter(socket.getOutputStream(), true); // request
 
-        writer.println(customerId);
+        // Check if such player exist
+        int connectStat = -1;
+        while (true) {
+            writer.println(customerId);
+            String line = reader.nextLine();
+            connectStat = Integer.parseInt(line);
+
+            if (connectStat == -1 ) {
+                System.out.println("This ID is taken, choice another one: ");
+                Scanner in = new Scanner(System.in);
+                customerId = Integer.parseInt(in.nextLine());
+            } else {
+                break;
+            }
+        }
+
         this.userID = customerId;
 
     }
 
-    public void getUserList() {
+    public String[] getUserList() {
         writer.println("refresh");
         String line = reader.nextLine();
+
+        int numberOfPlayers = Integer.parseInt(line);
+
+        String[] playerList = new String[numberOfPlayers];
+        for (int i = 0; i < numberOfPlayers; i++) {
+            line = reader.nextLine();
+            playerList[i] = line;
+        }
+
+        return playerList;
     }
 
-    public void sendBall(int accountNumber) {
+    public boolean exit() {
+        writer.println("exit");
+        String line = reader.nextLine();
+        return Boolean.parseBoolean(line);
+    }
 
+    public void sendBall(int playerID) {
+        writer.println("kick " + playerID);
+        String line = reader.nextLine();
+        System.out.println(line);
     }
 
     public void checkAvailability(int accountNumber) {
 
     }
 
-    public void refresh(int fromAccount, int toAccount, int amount) throws Exception {
 
-    }
+
 
     public void close() throws Exception {
         reader.close();

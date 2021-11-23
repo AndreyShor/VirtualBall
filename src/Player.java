@@ -26,8 +26,8 @@ public class Player {
         return this.permission;
     }
 
-    public void setPermission() {
-        this.permission = !this.permission;
+    public void setPermission(boolean value) {
+        this.permission = value;
     }
 
 
