@@ -11,6 +11,7 @@ public class PlayerHandler implements Runnable {
 
     private static ArrayList<Player> playerList;
     private AtomicInteger playerNotificationName;
+    private Player playerProfile;
     private final Socket socket;
 
     Integer userID;
@@ -26,29 +27,55 @@ public class PlayerHandler implements Runnable {
     public void connect(int id) {
         this.userID = id;
         synchronized (lock) {
-            playerList.add(new Player(userID));
+            if (playerList.size() != 0 ) {
+                playerProfile = new Player(userID);
+                playerList.add(playerProfile);
+            } else {
+                // First player in a game will have a ball at the start of the game
+                playerProfile = new Player(userID);
+                playerProfile.setPermission(true);
+                playerList.add(playerProfile);
+            }
+
         }
         System.out.println("New connection; customer ID " + userID);
     }
 
     public void disConnect() {
         synchronized (lock) {
-            playerList.removeIf(e -> e.getID() == this.userID);
+            // If player have a ball, before exit he gives it to another person
+            if (playerProfile.getPermission()) {
+                playerList.removeIf(e -> e.getID() == this.userID);
+
+                int upperBound = playerList.size();
+                Random rand = new Random();
+                int randomPlayer = rand.nextInt(upperBound);
+                playerList.get(randomPlayer).setPermission(true);
+            } else {
+                // delete player from a player pool
+                playerList.removeIf(e -> e.getID() == this.userID);
+            }
+
+
         }
     }
 
-    public void kickBall(int to) {
+    public boolean kickBall(int to) {
+        boolean workDone;
         synchronized (lock) {
-            for (var e : playerList) {
-                if (e.getID() == this.userID) {
-                    e.setPermission(false);
+            if (this.playerProfile.getPermission()) {
+                this.playerProfile.setPermission(false);
+                for (var e : playerList) {
+                    if (e.getID() == to) {
+                        e.setPermission(true);
+                    }
                 }
-
-                if (e.getID() == to) {
-                    e.setPermission(true);
-                }
+                workDone = true;
+            } else {
+                workDone = false;
             }
         }
+        return workDone;
     }
 
     public boolean checkPlayerExist(int id ) {
@@ -64,6 +91,19 @@ public class PlayerHandler implements Runnable {
         }
         return exist;
     }
+
+    public void getPlayerList(PrintWriter writer) {
+        // Send Amount of Players#
+        synchronized (lock) {
+            writer.println(playerList.size());
+            // Send each player data
+            for (var player: playerList) {
+                String playerInfo = "" + player.getID() + " " + player.getPermission();
+                writer.println(playerInfo);
+            }
+        }
+    }
+
 
 
 
@@ -99,25 +139,25 @@ public class PlayerHandler implements Runnable {
                     switch (substrings[0].toLowerCase()) {
                         case "kick":
                             int to = Integer.parseInt(substrings[1]);
-                            kickBall(to);
-                            writer.println(true);
-                            break;
 
-                        case "refresh":
-                            // Send Amount of Players
-                            writer.println(playerList.size());
-
-                            // Send each player data
-                            for (var player: playerList) {
-                                String playerInfo = "" + player.getID() + " " + player.getPermission();
-                                writer.println(playerInfo);
+                            var check = kickBall(to);
+                            if (check) {
+                                writer.println(1);
+                            } else {
+                                writer.println(0);
                             }
 
                             break;
 
+                        case "refresh":
+                            getPlayerList(writer);
+
+                            break;
+
+
                         case "exit":
                             disConnect();
-                            writer.println(true);
+                            writer.println("true");
                             socket.close();
                             break;
                         default:

@@ -30,6 +30,14 @@ public class Player {
         this.permission = value;
     }
 
+    public boolean equals(Player compare ){
+        if(this.playerID == compare.getID() && this.permission == compare.getPermission()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 
 
 

@@ -2,16 +2,34 @@ import com.sun.source.tree.WhileLoopTree;
 
 import java.util.Scanner;
 
-public class ClientProgram {
+public class ClientProgram{
 
     private static Client client;
+
 
     public static void main(String[] args) {
 
         try {
+            // Handle CTRL + C termination process
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    Thread.sleep(200);
+                    if (client != null) {
+                        client.exit();
+                        System.out.println("Your Data was deleted from server");
+                        Thread.sleep(100);
+                    }
+
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }));
+
+            // Game Interface
+
             System.out.println("VIRTUAL BALL !!!!");
             System.out.println("Choice option");
-            System.out.println("1. Login Game, 2. Exit Game");
+            System.out.println("1. Login Game, 2. Exit Game (Enter 2 OR any other character");
             var commandInput = inputInt();
 
             if (commandInput == 1)  {
@@ -36,9 +54,11 @@ public class ClientProgram {
                         System.out.println("Enter Player ID Number: ");
                         commandInput = inputInt();
                         client.sendBall(commandInput);
-                        System.out.println("Ball kicked to user with ID: " + commandInput);
                     } else if (commandInput == 2) {
                     } else if (commandInput == 3) {
+                        client.exit();
+                        System.out.println("Your Data was deleted from server");
+
                         break;
 
                     } else {
@@ -47,20 +67,16 @@ public class ClientProgram {
                 }
             } else if (commandInput == 2) {
             } else {
-                System.out.println("You have entered incorrect command");
+                System.out.println("You have entered character command, program exit ");
             }
 
-
-            if (!client.exit()) {
-                System.out.println("Error during deletion process");
-            }
             System.out.println("Game is finished");
-
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
     }
+
 
     private static int inputInt() {
         Scanner in = new Scanner(System.in);

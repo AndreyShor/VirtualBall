@@ -1,12 +1,15 @@
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Date;
 import java.util.Scanner;
+import java.util.Timer;
 
 public class Client implements AutoCloseable {
 
     final int port = 8888;
 
     private final Scanner reader;
+    private final Timer timer;
     private final PrintWriter writer;
     Integer userID;
 
@@ -36,6 +39,10 @@ public class Client implements AutoCloseable {
 
         this.userID = customerId;
 
+        this.timer = new Timer();
+        AutoReloader task = new AutoReloader(this);
+        this.timer.schedule(task, 200, 200);
+
     }
 
     public String[] getUserList() {
@@ -53,16 +60,23 @@ public class Client implements AutoCloseable {
         return playerList;
     }
 
-    public boolean exit() {
+    public void exit() {
+        this.timer.cancel();
+
         writer.println("exit");
-        String line = reader.nextLine();
-        return Boolean.parseBoolean(line);
+//        String line = reader.nextLine();
+//        System.out.println(line);
     }
 
     public void sendBall(int playerID) {
         writer.println("kick " + playerID);
         String line = reader.nextLine();
-        System.out.println(line);
+        var check = Integer.parseInt(line);
+        if (check == 1) {
+            System.out.println("Ball kicked to player" + playerID);
+        } else {
+            System.out.println("You dont have permission to kick ball");
+        }
     }
 
     public void checkAvailability(int accountNumber) {
